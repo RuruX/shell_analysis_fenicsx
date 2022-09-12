@@ -1,4 +1,4 @@
-# mesh-generate
+# Generate mesh files with Matlab code
 
 This is the workflow to generate the user-defined mesh with tri/quad shell elements as the input for the problems using dolfin/dolfinx. One can start by changing the parameters in a Matlab script, and end up with getting a mesh file with format as ".xdmf"
 
@@ -10,5 +10,5 @@ The steps for generating quad mesh on a rectangular domain are as following:
     - then after <Topology NodesPerElement="4" NumberOfElements="80" TopologyType="quadrilateral">
  <DataItem DataType="Int" Dimensions="80 4" Format="XML" Precision="4"> copy paste the **M_touse** (it’s the connectivity matrix that positions the element node IDs counterclockwise).
     - and change the "Dimensions/NumberOfElements" correspondingly.
-3) run `test_mesh_quad.py` to generate “meshout_quad.xdmf” and the corresponding h5 file.
+3) (Optional) run `test_mesh_quad.py` to generate “meshout_quad.xdmf” and the corresponding h5 file.
 4) you can then call this mesh from your code as the input.
