@@ -25,4 +25,4 @@ pip install -e .
 
 ## Test your installation
 
-Now you can test your installation by running the examples under the `shell_analysis_fenics/examples/` directory. To run the tests, you should go into the directory, for example, `examples/scordelis_lo_roof/`, and run `scordelis_lo_roof.py`. If the installation was successful, you will be able to see the outputs of the simulation results, and you can also check the results through visualization by openning `solutions/u_mid.xdmf` in Paraview.
+Now you can test your installation by running the examples under the `shell_analysis_fenicsx/examples/` directory. To run the tests, you should go into the directory, for example, `examples/scordelis_lo_roof/`, and run `scordelis_lo_roof.py`. If the installation was successful, you will be able to see the outputs of the simulation results, and you can also check the results through visualization by openning `solutions/u_mid.xdmf` in Paraview.
