@@ -1,10 +1,10 @@
 from distutils.core import setup
 import setuptools
 setup(
-    name='shell_analysis_fenicsx',
+    name='shell_analysis_fenicsX',
     version='0.1',
     packages=[
-        'shell_analysis_fenicsx'
+        'shell_analysis_fenicsX'
     ],
     url='https://github.com/RuruX/shell-analysis-fenicsx',
     author='Ru Xiang',
