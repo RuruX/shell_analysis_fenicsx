@@ -12,7 +12,7 @@ from dolfinx.fem import locate_dofs_topological, Constant, dirichletbc
 from dolfinx.mesh import locate_entities
 import numpy as np
 from mpi4py import MPI
-from shell_analysis_fenicsX import *
+from shell_analysis_fenicsx import *
 
 ########## Reference results with ICEM meshes ######
 ############### unit: meter ########################
@@ -64,7 +64,7 @@ shellmesh = ["uCRM_shellmesh_2364_quad_2800.xdmf", #Tip deflection:
             "uCRM_shellmesh_14838_quad_15952.xdmf", #Tip deflection:
             "uCRM_shellmesh_42906_quad_44800.xdmf", #Tip deflection:
             "uCRM_shellmesh_61530_quad_63808.xdmf", #Tip deflection:
-            "uCRM_shellmesh_175362_quad_179200.xdmf",] #Tip deflection: 
+            "uCRM_shellmesh_175362_quad_179200.xdmf",] #Tip deflection:
 
 PATH_ICEM = "../../mesh/mesh-examples/uCRM-9-ICEM/"
 ICEM_mesh = ["uCRM-9_coarse.xdmf", #Tip deflection: 0.17673840967897833

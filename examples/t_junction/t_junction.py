@@ -1,7 +1,7 @@
 """
 Structural analysis of a T-shaped beam
 
-Reference solution: 
+Reference solution:
  https://web.me.iastate.edu/jmchsu/files/Herrema_et_al-2018-CMAME.pdf
 
 """
@@ -12,18 +12,18 @@ from dolfinx.fem import (locate_dofs_topological, locate_dofs_geometrical,
 from dolfinx.mesh import locate_entities
 import numpy as np
 from mpi4py import MPI
-from shell_analysis_fenicsX import *
+from shell_analysis_fenicsx import *
 
 t_beam = [#### quad mesh ####
         "t_beam_quad_80.xdmf",
         "t_beam_quad_320.xdmf",
         "t_beam_quad_1280.xdmf",
         "t_beam_quad_5120.xdmf",]
-        
+
 filename = "../../mesh/mesh-examples/t-junction/"+t_beam[2]
 with dolfinx.io.XDMFFile(MPI.COMM_WORLD, filename, "r") as xdmf:
         mesh = xdmf.read_mesh(name="Grid")
-      
+
 
 E_val = 1e7
 nu_val = 0.0
@@ -89,9 +89,9 @@ solveKSP(A, b, w.vector)
 
 ########## Output: ##########
 magnitude = computeNodalDispMagnitude(w.sub(0))
-    
+
 print("Maximum deflection magnitude from Herrema:", 0.0589)
-print("Maximum deflection magnitude from this test:", 
+print("Maximum deflection magnitude from this test:",
                                 np.max(magnitude))
 print("  Number of elements = "+str(mesh.topology.index_map(mesh.topology.dim).size_local))
 print("  Number of vertices = "+str(mesh.topology.index_map(0).size_local))

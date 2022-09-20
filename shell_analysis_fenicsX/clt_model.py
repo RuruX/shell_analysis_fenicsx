@@ -10,7 +10,7 @@ class CLT(Model):
         self.parameters.declare('mat_prop')
         self.parameters.declare('no_plies')
         self.parameters.declare('ply_stack',default=np.array([]))
-        self.parameters.declare('h0', default=0.0002) 
+        self.parameters.declare('h0', default=0.0002)
 
     def define(self):
         # h = self.parameters['h']      # you might want h to be constant for some applications
@@ -42,7 +42,7 @@ class CLT(Model):
             t_sig_inv = self.calc_t_sig_inv(ply_stack[i],i)
             aa = csdl.matmat(t_sig_inv,q_var)
             q_bar[:,:,i] = csdl.reshape(csdl.matmat(aa,t_eps),(3,3,1))
-            
+
             c = csdl.cos(ply_stack[i])
             s = csdl.sin(ply_stack[i])
             q_bar_out[0,0,i] = csdl.reshape(q_out[0][0]*c**2 + q_out[1][1]*s**2,(1,1,1))
@@ -56,7 +56,7 @@ class CLT(Model):
 
         self.add_objective('A11')
 
-    # Theis doesn't need to be in CSDL  
+    # Theis doesn't need to be in CSDL
     def calc_q(self, mat_prop):
         E1 = mat_prop[0]
         E2 = mat_prop[1]
@@ -68,8 +68,8 @@ class CLT(Model):
         D = 1-E2/E1*v12**2
         q = [[E1/D, v12*E2/D, 0], [v12*E2/D, E2/D, 0], [0, 0, G12]] # clt plane stress
         q_out = [[G23,0],[0,G12]] # out of plane (fsdt)
-        # q = [[E1/D, v12*E2/D, 0, 0, 0], 
-        #      [v12*E2/D, E2/D, 0, 0, 0], 
+        # q = [[E1/D, v12*E2/D, 0, 0, 0],
+        #      [v12*E2/D, E2/D, 0, 0, 0],
         #      [0, 0, G12, 0, 0],
         #      [0, 0, 0, G12, 0],
         #      [0, 0, 0, 0, G23]]
@@ -100,7 +100,7 @@ class CLT(Model):
                 t_eps[i,j] = csdl.reshape(TepsArray[i][j],(1,1))    # again replace with einsum
         return t_eps
 
-    # assembles the ABD matrices 
+    # assembles the ABD matrices
     def calc_ABD(self, q_bar, q_bar_out, h, no_plies):
         A = self.create_output('A',shape=(3,3))
         Al = np.zeros((3,3),dtype=Output)
@@ -187,5 +187,3 @@ class CLT(Model):
 
 #print(sim['ply_stack'])
 #print(sim['A11'])
-
-

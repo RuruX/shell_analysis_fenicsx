@@ -67,9 +67,3 @@ def plotter_3d(mesh, vertex_values):
     # Add mesh with edges
     plotter.add_mesh(grid, show_edges=True, scalars="u", scalar_bar_args=sargs)
     return plotter
-    
-    
-    
-    
-    
-    

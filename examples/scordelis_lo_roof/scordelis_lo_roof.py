@@ -9,7 +9,7 @@ from dolfinx.fem import (locate_dofs_topological, locate_dofs_geometrical,
 from dolfinx.mesh import locate_entities
 import numpy as np
 from mpi4py import MPI
-from shell_analysis_fenicsX import *
+from shell_analysis_fenicsx import *
 
 
 roof = [#### tri mesh ####

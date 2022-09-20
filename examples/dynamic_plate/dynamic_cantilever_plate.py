@@ -9,7 +9,7 @@ from dolfinx.fem import (locate_dofs_topological, locate_dofs_geometrical,
 from dolfinx.mesh import locate_entities
 import numpy as np
 from mpi4py import MPI
-from shell_analysis_fenicsX import *
+from shell_analysis_fenicsx import *
 
 
 beam = [#### quad mesh ####
@@ -21,7 +21,7 @@ beam = [#### quad mesh ####
         "plate_2_10_quad_20_100.xdmf",
         "plate_2_10_quad_40_200.xdmf",
         "plate_2_10_quad_80_400.xdmf",]
-        
+
 filename = "../../mesh/mesh-examples/clamped-RM-plate/"+beam[2]
 with dolfinx.io.XDMFFile(MPI.COMM_WORLD, filename, "r") as xdmf:
     mesh = xdmf.read_mesh(name="Grid")
@@ -93,14 +93,14 @@ dWmass = elastic_model.inertialResidual(rho,h,uddot,thetaddot)
 
 ######### Set the BCs to have all the dofs equal to 0 on the left edge ##########
 # Define BCs geometrically
-locate_BC1 = locate_dofs_geometrical((W.sub(0), W.sub(0).collapse()[0]), 
+locate_BC1 = locate_dofs_geometrical((W.sub(0), W.sub(0).collapse()[0]),
                                     lambda x: np.isclose(x[0], 0. ,atol=1e-6))
-locate_BC2 = locate_dofs_geometrical((W.sub(1), W.sub(1).collapse()[0]), 
+locate_BC2 = locate_dofs_geometrical((W.sub(1), W.sub(1).collapse()[0]),
                                     lambda x: np.isclose(x[0], 0. ,atol=1e-6))
 ubc=  Function(W)
 with ubc.vector.localForm() as uloc:
      uloc.set(0.)
-     
+
 bcs = [dirichletbc(ubc, locate_BC1, W.sub(0)),
         dirichletbc(ubc, locate_BC2, W.sub(1)),
        ]
@@ -151,7 +151,7 @@ for i in range(0,Nsteps):
     sigma = elastic_model.plane_stress_elasticity(E, nu)
     project(sigma, sig)
     xdmf_file_stress.write_function(sig, t)
-    
+
     # Record tip displacement and compute energies
     # u_tip[i+1] = evaluateFunc(w.sub(0), [10., 1.0, 0.], mesh)[2]
     u_tip[i+1] = w.sub(0).eval([[10., 1.0, 0.]], [74])[2]

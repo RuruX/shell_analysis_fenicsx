@@ -10,7 +10,7 @@ import dolfinx
 import dolfinx.io
 import ufl
 from dolfinx.fem.petsc import (assemble_vector, assemble_matrix, apply_lifting)
-from dolfinx.fem import (set_bc, Function, FunctionSpace, form,     
+from dolfinx.fem import (set_bc, Function, FunctionSpace, form,
                         assemble_scalar, VectorFunctionSpace)
 from ufl import TestFunction, TrialFunction, dx, inner
 from mpi4py import MPI
@@ -21,12 +21,12 @@ import numpy as np
 
 def project(v, target_func, bcs=[]):
 
-    """ 
-    Solution from 
+    """
+    Solution from
     https://fenicsproject.discourse.group/t/problem-interpolating-mixed-
     function-dolfinx/4142/6
     """
-    
+
     # Ensure we have a mesh and attach to measure
     V = target_func.function_space
     # Define variational problem for projection
@@ -41,14 +41,14 @@ def project(v, target_func, bcs=[]):
     apply_lifting(b, [form(a)], [bcs])
     b.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
     set_bc(b, bcs)
-    
+
     solver = PETSc.KSP().create(A.getComm())
     solver.setOperators(A)
     solver.solve(b, target_func.vector)
 
 
 def calculateSurfaceArea(mesh, boundary):
-    
+
     #try to integrate a subset of the domain:
     Q = FunctionSpace(mesh, ("DG", 0))
     vq = TestFunction(Q)
@@ -58,7 +58,7 @@ def calculateSurfaceArea(mesh, boundary):
 
     with kappa.vector.localForm() as loc:
         loc.setValues(fixedCells, np.full(len(fixedCells), 0))
-    
+
     s = assemble_scalar(form(vq*kappa*dx))
     surface_area = mesh.comm.allreduce(s, op=MPI.SUM)
     return surface_area
@@ -86,7 +86,7 @@ class Delta:
         self.dist = dist
         self.x0 = x0
         self.f_p = f_p
-        
+
     def eval(self, x):
         dist = self.dist
         values = np.zeros((3, x.shape[1]))

@@ -1,10 +1,10 @@
 from dolfinx.fem import Function, Constant
-from shell_analysis_fenicsX import *
+from shell_analysis_fenicsx import *
 class ImplicitMidpointIntegrator:
 
     """
     Class to encapsulate backward Euler formulas for first- and second-order
-    ODE systems.  
+    ODE systems.
     """
 
     def __init__(self, mesh, DELTA_T, x, oldFunctions, t=0.0):
@@ -28,7 +28,7 @@ class ImplicitMidpointIntegrator:
         if(self.systemOrder == 2):
             self.xdot_old = oldFunctions[1]
         self.t = t + float(DELTA_T) # DELTA_T may be a Constant already
-            
+
     def xdot(self):
         """
         Returns the approximation of the velocity at the current time step.
@@ -44,7 +44,7 @@ class ImplicitMidpointIntegrator:
         """
         return Constant(self.mesh, 1.0/self.DELTA_T)*self.xdot() \
             - Constant(self.mesh, 1.0/self.DELTA_T)*self.xdot_old
-            
+
     def advance(self):
         """
         Overwrites the data from the previous time step with the
@@ -64,7 +64,7 @@ class BackwardEulerIntegrator:
 
     """
     Class to encapsulate backward Euler formulas for first- and second-order
-    ODE systems.  
+    ODE systems.
     """
 
     def __init__(self, mesh, DELTA_T, x, oldFunctions, t=0.0):
@@ -88,7 +88,7 @@ class BackwardEulerIntegrator:
         if(self.systemOrder == 2):
             self.xdot_old = oldFunctions[1]
         self.t = t + float(DELTA_T) # DELTA_T may be a Constant already
-            
+
     def xdot(self):
         """
         Returns the approximation of the velocity at the current time step.
@@ -103,7 +103,7 @@ class BackwardEulerIntegrator:
         """
         return Constant(self.mesh, 1.0/self.DELTA_T)*self.xdot() \
             - Constant(self.mesh, 1.0/self.DELTA_T)*self.xdot_old
-            
+
     def advance(self):
         """
         Overwrites the data from the previous time step with the
@@ -118,4 +118,3 @@ class BackwardEulerIntegrator:
         if(self.systemOrder==2):
             project(xdot_old, self.xdot_old)
         self.t += float(self.DELTA_T)
-

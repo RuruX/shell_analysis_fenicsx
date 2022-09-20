@@ -10,20 +10,20 @@ from dolfinx.fem import (locate_dofs_topological, locate_dofs_geometrical,
 from dolfinx.mesh import locate_entities
 import numpy as np
 from mpi4py import MPI
-from shell_analysis_fenicsX import *
+from shell_analysis_fenicsx import *
 # (interactive visualization not available if using docker container)
-# from shell_analysis_fenicsX.pyvista_plotter import plotter_3d
+# from shell_analysis_fenicsx.pyvista_plotter import plotter_3d
 
 
 path = "../../mesh/mesh-examples/pinched-cylinder/"
 # mesh refinements (4, 8, 16 and 32 elements per edge)
 cylinder = [#### tri mesh ####
-        "cylinder_tri_4_4.xdmf", 
-        "cylinder_tri_8_8.xdmf", 
-        "cylinder_tri_16_16.xdmf", 
-        "cylinder_tri_32_32.xdmf", 
-        "cylinder_tri_64_64.xdmf", 
-        "cylinder_tri_128_128.xdmf", 
+        "cylinder_tri_4_4.xdmf",
+        "cylinder_tri_8_8.xdmf",
+        "cylinder_tri_16_16.xdmf",
+        "cylinder_tri_32_32.xdmf",
+        "cylinder_tri_64_64.xdmf",
+        "cylinder_tri_128_128.xdmf",
         ### quad mesh ####
         "cylinder_quad_4_4.xdmf",
         "cylinder_quad_8_8.xdmf",
@@ -84,27 +84,27 @@ ubc = Function(W)
 ubc.vector.set(0.0)
 
 
-locate_BC1 = locate_dofs_geometrical((W.sub(0).sub(1), W.sub(0).sub(1).collapse()[0]), 
+locate_BC1 = locate_dofs_geometrical((W.sub(0).sub(1), W.sub(0).sub(1).collapse()[0]),
                                     lambda x: np.isclose(x[0], 0. ,atol=1e-6))
-locate_BC2 = locate_dofs_geometrical((W.sub(0).sub(2), W.sub(0).sub(2).collapse()[0]), 
+locate_BC2 = locate_dofs_geometrical((W.sub(0).sub(2), W.sub(0).sub(2).collapse()[0]),
                                     lambda x: np.isclose(x[0], 0. ,atol=1e-6))
-locate_BC3 = locate_dofs_geometrical((W.sub(0).sub(1), W.sub(0).sub(1).collapse()[0]), 
+locate_BC3 = locate_dofs_geometrical((W.sub(0).sub(1), W.sub(0).sub(1).collapse()[0]),
                                     lambda x: np.isclose(x[1], 0. ,atol=1e-6))
-locate_BC4 = locate_dofs_geometrical((W.sub(1).sub(0), W.sub(1).sub(0).collapse()[0]),    
+locate_BC4 = locate_dofs_geometrical((W.sub(1).sub(0), W.sub(1).sub(0).collapse()[0]),
                                     lambda x: np.isclose(x[1], 0. ,atol=1e-6))
-locate_BC5 = locate_dofs_geometrical((W.sub(1).sub(2), W.sub(1).sub(2).collapse()[0]), 
+locate_BC5 = locate_dofs_geometrical((W.sub(1).sub(2), W.sub(1).sub(2).collapse()[0]),
                                     lambda x: np.isclose(x[1], 0. ,atol=1e-6))
-locate_BC6 = locate_dofs_geometrical((W.sub(0).sub(0), W.sub(0).sub(0).collapse()[0]), 
+locate_BC6 = locate_dofs_geometrical((W.sub(0).sub(0), W.sub(0).sub(0).collapse()[0]),
                                     lambda x: np.isclose(x[0], length/2. ,atol=1e-6))
-locate_BC7 = locate_dofs_geometrical((W.sub(1).sub(1), W.sub(1).sub(1).collapse()[0]), 
+locate_BC7 = locate_dofs_geometrical((W.sub(1).sub(1), W.sub(1).sub(1).collapse()[0]),
                                     lambda x: np.isclose(x[0], length/2. ,atol=1e-6))
-locate_BC8 = locate_dofs_geometrical((W.sub(1).sub(2), W.sub(1).sub(2).collapse()[0]), 
+locate_BC8 = locate_dofs_geometrical((W.sub(1).sub(2), W.sub(1).sub(2).collapse()[0]),
                                     lambda x: np.isclose(x[0], length/2. ,atol=1e-6))
-locate_BC9 = locate_dofs_geometrical((W.sub(0).sub(2), W.sub(0).sub(1).collapse()[0]), 
+locate_BC9 = locate_dofs_geometrical((W.sub(0).sub(2), W.sub(0).sub(1).collapse()[0]),
                                     lambda x: np.isclose(x[2], 0. ,atol=1e-6))
-locate_BC10 = locate_dofs_geometrical((W.sub(1).sub(0), W.sub(1).sub(0).collapse()[0]),    
+locate_BC10 = locate_dofs_geometrical((W.sub(1).sub(0), W.sub(1).sub(0).collapse()[0]),
                                     lambda x: np.isclose(x[2], 0. ,atol=1e-6))
-locate_BC11 = locate_dofs_geometrical((W.sub(1).sub(1), W.sub(1).sub(2).collapse()[0]), 
+locate_BC11 = locate_dofs_geometrical((W.sub(1).sub(1), W.sub(1).sub(2).collapse()[0]),
                                     lambda x: np.isclose(x[2], 0. ,atol=1e-6))
 
 bcs = [dirichletbc(ubc, locate_BC1, W.sub(0).sub(1)),
@@ -119,7 +119,7 @@ bcs = [dirichletbc(ubc, locate_BC1, W.sub(0).sub(1)),
        dirichletbc(ubc, locate_BC10, W.sub(1).sub(0)),
        dirichletbc(ubc, locate_BC11, W.sub(1).sub(1))
        ]
-       
+
 ########### Apply the point load #############################
 
 

@@ -14,9 +14,9 @@ from dolfinx.fem import (locate_dofs_topological, locate_dofs_geometrical,
 from dolfinx.mesh import locate_entities
 import numpy as np
 from mpi4py import MPI
-from shell_analysis_fenicsX import *
+from shell_analysis_fenicsx import *
 # (interactive visualization not available if using docker container)
-# from shell_analysis_fenicsX.pyvista_plotter import plotter_3d
+# from shell_analysis_fenicsx.pyvista_plotter import plotter_3d
 
 
 import argparse

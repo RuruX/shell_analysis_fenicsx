@@ -12,7 +12,7 @@ from dolfinx.fem import locate_dofs_topological, Constant, dirichletbc
 from dolfinx.mesh import locate_entities
 import numpy as np
 from mpi4py import MPI
-from shell_analysis_fenicsX import *
+from shell_analysis_fenicsx import *
 
 icemmesh = ["uCRM-9_wingbox_quad_coarse.xdmf",
             "uCRM-9_wingbox_quad_medium.xdmf",
@@ -122,4 +122,3 @@ u_mid, _ = w.split()
 with XDMFFile(MPI.COMM_WORLD, "solutions/icemmesh/u_mid.xdmf", "w") as xdmf:
     xdmf.write_mesh(mesh)
     xdmf.write_function(u_mid)
-

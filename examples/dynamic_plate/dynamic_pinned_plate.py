@@ -1,5 +1,5 @@
 """
-Dynamic structural analysis for free vibration of a pinned beam 
+Dynamic structural analysis for free vibration of a pinned beam
 with initial velocity
 """
 from logging import WARNING
@@ -9,7 +9,7 @@ from dolfinx.fem import (locate_dofs_topological, locate_dofs_geometrical,
 from dolfinx.mesh import locate_entities
 import numpy as np
 from mpi4py import MPI
-from shell_analysis_fenicsX import *
+from shell_analysis_fenicsx import *
 
 import argparse
 parser = argparse.ArgumentParser()
@@ -30,7 +30,7 @@ beam = [#### quad mesh ####
         "plate_2_10_quad_20_100.xdmf",
         "plate_2_10_quad_40_200.xdmf",
         "plate_2_10_quad_80_400.xdmf",]
-        
+
 filename = "../../mesh/mesh-examples/clamped-RM-plate/"+beam[2]
 with dolfinx.io.XDMFFile(comm, filename, "r") as xdmf:
     mesh = xdmf.read_mesh(name="Grid")
@@ -56,8 +56,8 @@ class u_exact:
         self.t = 0.
 
     def eval(self, x):
-        return (np.full(x.shape[1], 0.0), 
-                np.full(x.shape[1], 0.0), 
+        return (np.full(x.shape[1], 0.0),
+                np.full(x.shape[1], 0.0),
                 -C*np.sin(omega*self.t)*np.sin(lam*x[0]))
 
 # udot = d(u)/d(t)
@@ -67,8 +67,8 @@ class udot_exact:
         self.t = 0.
 
     def eval(self, x):
-        return (np.full(x.shape[1], 0.0), 
-                np.full(x.shape[1], 0.0), 
+        return (np.full(x.shape[1], 0.0),
+                np.full(x.shape[1], 0.0),
                 -C*omega*np.cos(omega*self.t)*np.sin(lam*x[0]))
 
 # thetadot_y = - d(udot_z)/d(x)
@@ -77,7 +77,7 @@ class thetadot_exact:
         self.t = 0.
 
     def eval(self, x):
-        return (np.full(x.shape[1], 0.0), 
+        return (np.full(x.shape[1], 0.0),
                 -C*lam*omega*np.sin(omega*self.t)*np.cos(lam*x[0]),
                 np.full(x.shape[1], 0.0))
 
@@ -88,8 +88,8 @@ class uddot_exact:
         self.t = 0.
 
     def eval(self, x):
-        return (np.full(x.shape[1], 0.0), 
-                np.full(x.shape[1], 0.0), 
+        return (np.full(x.shape[1], 0.0),
+                np.full(x.shape[1], 0.0),
                 C*omega**2*np.sin(omega*self.t)*np.sin(lam*x[0]))
 
 # Time-stepping parameters
@@ -154,22 +154,22 @@ F = dWmass + dWint_mid
 # to minimize the effect of membrane stress; the y-component of displacement is fixed
 # to zero for the other two edges of the plate to mimic the Euler-Bernoulli beam deformation -
 # - though there should not be obvious effect of this constraint.
-locate_BC1 = locate_dofs_geometrical((W.sub(0).sub(1), W.sub(0).sub(1).collapse()[0]), 
+locate_BC1 = locate_dofs_geometrical((W.sub(0).sub(1), W.sub(0).sub(1).collapse()[0]),
                         lambda x: np.isclose(x[0], 0., atol=1e-6))
-locate_BC2 = locate_dofs_geometrical((W.sub(0).sub(1), W.sub(0).sub(1).collapse()[0]), 
+locate_BC2 = locate_dofs_geometrical((W.sub(0).sub(1), W.sub(0).sub(1).collapse()[0]),
                         lambda x: np.isclose(x[0], length, atol=1e-6))
-locate_BC3 = locate_dofs_geometrical((W.sub(0).sub(1), W.sub(0).sub(1).collapse()[0]), 
+locate_BC3 = locate_dofs_geometrical((W.sub(0).sub(1), W.sub(0).sub(1).collapse()[0]),
                         lambda x: np.isclose(x[1], 0., atol=1e-6))
-locate_BC4 = locate_dofs_geometrical((W.sub(0).sub(1), W.sub(0).sub(1).collapse()[0]), 
+locate_BC4 = locate_dofs_geometrical((W.sub(0).sub(1), W.sub(0).sub(1).collapse()[0]),
                         lambda x: np.isclose(x[1], width, atol=1e-6))
-locate_BC5 = locate_dofs_geometrical((W.sub(0).sub(2), W.sub(0).sub(2).collapse()[0]), 
+locate_BC5 = locate_dofs_geometrical((W.sub(0).sub(2), W.sub(0).sub(2).collapse()[0]),
                         lambda x: np.isclose(x[0], 0., atol=1e-6))
-locate_BC6 = locate_dofs_geometrical((W.sub(0).sub(2), W.sub(0).sub(2).collapse()[0]), 
+locate_BC6 = locate_dofs_geometrical((W.sub(0).sub(2), W.sub(0).sub(2).collapse()[0]),
                         lambda x: np.isclose(x[0], length, atol=1e-6))
 ubc=  Function(W)
 with ubc.vector.localForm() as uloc:
      uloc.set(0.)
-     
+
 bcs = [dirichletbc(ubc, locate_BC1, W.sub(0).sub(1)),
         dirichletbc(ubc, locate_BC2, W.sub(0).sub(1)),
         dirichletbc(ubc, locate_BC3, W.sub(0).sub(1)),
@@ -226,7 +226,7 @@ for i in range(0,Nsteps):
     solveNonlinear(F,w,bcs,log=False)
 
     # Advance to the next time step
-    # ** since u_dot, theta_dot are not functions, we cannot directly 
+    # ** since u_dot, theta_dot are not functions, we cannot directly
     # ** interpolate them onto wdot_old.
     wdot_old.vector[:] = wdot_vector(w,w_old,wdot_old)
     w_old.interpolate(w)

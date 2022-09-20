@@ -14,7 +14,7 @@ from dolfinx.io import VTXWriter
 
 import numpy as np
 from mpi4py import MPI
-from shell_analysis_fenicsX import *
+from shell_analysis_fenicsx import *
 from readCLT import readCLT, sortIndex
 
 

@@ -18,7 +18,7 @@ from dolfinx.fem import FunctionSpace, TensorFunctionSpace, Function, Constant
 from dolfinx.nls.petsc import NewtonSolver
 from ufl import (dx, inner, dot, cross, as_matrix, Identity, sym, split,
                 CellDiameter, TestFunction, derivative, tr)
-from shell_analysis_fenicsX.kinematics import *
+from shell_analysis_fenicsx.kinematics import *
 
 
 class MaterialModel(object):
@@ -421,4 +421,4 @@ def solveKSP_mumps(A, b, x):
 
     # solve
     ksp.setUp()
-    ksp.solve(b, x)    
+    ksp.solve(b, x)

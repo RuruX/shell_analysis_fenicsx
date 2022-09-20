@@ -9,13 +9,13 @@ from dolfinx.fem import (locate_dofs_topological, locate_dofs_geometrical,
 from dolfinx.mesh import locate_entities
 import numpy as np
 from mpi4py import MPI
-from shell_analysis_fenicsX import *
+from shell_analysis_fenicsx import *
 
 
 path = "../../mesh/mesh-examples/hemispherical-shell/"
 # mesh refinements (4, 8, 16 and 32 elements per edge)
 sphere = [#### tri mesh ####
-        "sphere_tri_4_4.xdmf", 
+        "sphere_tri_4_4.xdmf",
         "sphere_tri_8_8.xdmf",
         "sphere_tri_16_16.xdmf",
         "sphere_tri_32_32.xdmf",
@@ -84,25 +84,25 @@ u0 = Function(W)
 u0.vector.set(0.0)
 
 
-locate_BC1 = locate_dofs_geometrical((W.sub(0).sub(1), W.sub(0).sub(1).collapse()[0]), 
+locate_BC1 = locate_dofs_geometrical((W.sub(0).sub(1), W.sub(0).sub(1).collapse()[0]),
                                     lambda x: np.isclose(x[1], 0., atol=1e-6))
-locate_BC2 = locate_dofs_geometrical((W.sub(1).sub(0), W.sub(1).sub(0).collapse()[0]), 
+locate_BC2 = locate_dofs_geometrical((W.sub(1).sub(0), W.sub(1).sub(0).collapse()[0]),
                                     lambda x: np.isclose(x[1], 0., atol=1e-6))
-locate_BC3 = locate_dofs_geometrical((W.sub(1).sub(2), W.sub(1).sub(2).collapse()[0]), 
+locate_BC3 = locate_dofs_geometrical((W.sub(1).sub(2), W.sub(1).sub(2).collapse()[0]),
                                     lambda x: np.isclose(x[1], 0., atol=1e-6))
-                                    
-locate_BC4 = locate_dofs_geometrical((W.sub(0).sub(0), W.sub(0).sub(0).collapse()[0]),    
+
+locate_BC4 = locate_dofs_geometrical((W.sub(0).sub(0), W.sub(0).sub(0).collapse()[0]),
                                     lambda x: np.isclose(x[0], 0., atol=1e-6))
-locate_BC5 = locate_dofs_geometrical((W.sub(1).sub(1), W.sub(1).sub(1).collapse()[0]), 
+locate_BC5 = locate_dofs_geometrical((W.sub(1).sub(1), W.sub(1).sub(1).collapse()[0]),
                                     lambda x: np.isclose(x[0], 0., atol=1e-6))
-locate_BC6 = locate_dofs_geometrical((W.sub(1).sub(2), W.sub(1).sub(2).collapse()[0]), 
+locate_BC6 = locate_dofs_geometrical((W.sub(1).sub(2), W.sub(1).sub(2).collapse()[0]),
                                     lambda x: np.isclose(x[0], 0., atol=1e-6))
-                                    
+
 
 ubc=  Function(W)
 with ubc.vector.localForm() as uloc:
      uloc.set(0.)
-     
+
 bcs = [dirichletbc(ubc, locate_BC1, W.sub(0).sub(1)),
        dirichletbc(ubc, locate_BC2, W.sub(1).sub(0)),
        dirichletbc(ubc, locate_BC3, W.sub(1).sub(2)),
@@ -110,7 +110,7 @@ bcs = [dirichletbc(ubc, locate_BC1, W.sub(0).sub(1)),
        dirichletbc(ubc, locate_BC5, W.sub(1).sub(1)),
        dirichletbc(ubc, locate_BC6, W.sub(1).sub(2)),
        ]
-       
+
 ########### Apply the point load #############################
 
 

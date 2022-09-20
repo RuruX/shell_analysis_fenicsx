@@ -13,12 +13,12 @@ from dolfinx.fem import (locate_dofs_topological, locate_dofs_geometrical,
 from dolfinx.mesh import locate_entities
 import numpy as np
 from mpi4py import MPI
-from shell_analysis_fenicsX import *
+from shell_analysis_fenicsx import *
 
 tri_mesh = [
             "eVTOL_wing_half_tri_77020_103680.xdmf", # error
             "eVTOL_wing_half_tri_81475_109456.xdmf", # error
-            "eVTOL_wing_half_tri_107695_136686.xdmf", 
+            "eVTOL_wing_half_tri_107695_136686.xdmf",
             "eVTOL_wing_half_tri_135957_170304.xdmf"] # error
 
 quad_mesh = [
@@ -73,14 +73,14 @@ u0 = Function(W)
 u0.vector.set(0.0)
 
 
-locate_BC1 = locate_dofs_geometrical((W.sub(0), W.sub(0).collapse()[0]), 
+locate_BC1 = locate_dofs_geometrical((W.sub(0), W.sub(0).collapse()[0]),
                                     lambda x: np.isclose(x[1], 0. ,atol=1e-6))
-locate_BC2 = locate_dofs_geometrical((W.sub(1), W.sub(1).collapse()[0]), 
+locate_BC2 = locate_dofs_geometrical((W.sub(1), W.sub(1).collapse()[0]),
                                     lambda x: np.isclose(x[1], 0. ,atol=1e-6))
 ubc=  Function(W)
 with ubc.vector.localForm() as uloc:
      uloc.set(0.)
-     
+
 bcs = [dirichletbc(ubc, locate_BC1, W.sub(0)),
         dirichletbc(ubc, locate_BC2, W.sub(1)),
        ]
