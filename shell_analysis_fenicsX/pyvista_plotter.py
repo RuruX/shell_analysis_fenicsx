@@ -17,11 +17,11 @@ except ModuleNotFoundError:
     print("pyvista is required for this demo; install pyvista by `pip install pyvista`")
     exit(0)
 
-def plotter_3d(mesh, vertex_values):
-    #pyvista.OFF_SCREEN = True
+def plotter_3d(mesh, vertex_values, value_name='Value name', interactive=True):
+
     # If environment variable PYVISTA_OFF_SCREEN is set to true save a png
     # otherwise create interactive plot
-    if pyvista.OFF_SCREEN:
+    if not interactive:
         from pyvista.utilities.xvfb import start_xvfb
         start_xvfb(wait=0.1)
 
@@ -55,7 +55,7 @@ def plotter_3d(mesh, vertex_values):
 
     # Create a new plotter, and plot the values as a surface over the mesh
     plotter = pyvista.Plotter()
-    plotter.add_text("Function values over the surface of a mesh",
+    plotter.add_text(value_name,
                      position="upper_edge", font_size=14, color="black")
 
     # Define some styling arguments for a colorbar

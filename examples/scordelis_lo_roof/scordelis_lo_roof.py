@@ -164,8 +164,6 @@ with XDMFFile(MPI.COMM_WORLD, "solutions/u_mid.xdmf", "w") as xdmf:
     xdmf.write_mesh(mesh)
     xdmf.write_function(u_mid)
 
-File = open('results.txt', 'a')
-outputs = '\n{0:5d}      {1:5d}      {2:6d}     {3:.6f}'.format(
-            num_el, num_vertice, num_dof, min(uZ))
-File.write(outputs)
-File.close()
+from shell_analysis_fenicsx.pyvista_plotter import plotter_3d
+plottor = plotter_3d(mesh, uZ, 'Vertical displacement')
+plottor.show()
