@@ -15,7 +15,7 @@ from dolfinx.io import VTXWriter
 import numpy as np
 from mpi4py import MPI
 from shell_analysis_fenicsx import *
-from readCLT import readCLT, sortIndex
+from shell_analysis_fenicsx.read_properties import readCLT, sortIndex
 
 
 quad_mesh = ["uCRM-9_coarse.xdmf",
@@ -78,14 +78,14 @@ mesh.topology.create_connectivity(0, mesh.topology.dim)
 cell_to_vertex = mesh.topology.connectivity(mesh.topology.dim, 0)
 cell_ind = 1998
 vertex_ind = cell_to_vertex.links(cell_ind)
-print("Vertices id in the cell:", vertex_ind)
+# print("Vertices id in the cell:", vertex_ind)
 original_vertex_ind = np.zeros(4)
 for i in range(4):
-    print("Coordinates of "+str(i), coords[vertex_ind[i],:])
+    # print("Coordinates of "+str(i), coords[vertex_ind[i],:])
     original_vertex_ind[i] = node_indices[vertex_ind[i]]+1
-print("Original vertices id in the cell:", original_vertex_ind.astype("int32"))
-print(cell_indices[cell_ind]+1)
-print(hrcs[cell_indices[cell_ind]], h_array[cell_ind])
+# print("Original vertices id in the cell:", original_vertex_ind.astype("int32"))
+# print(cell_indices[cell_ind]+1)
+# print(hrcs[cell_indices[cell_ind]], h_array[cell_ind])
 # apply array in function space
 VF = VectorFunctionSpace(mesh, ("CG", 1))
 f = Function(VF)
@@ -151,7 +151,7 @@ bcs = [dirichletbc(ubc, locate_BC1, W.sub(0)),
 
 
 ########## Solve with Newton solver wrapper: ##########
-# solveNonlinear(F,w,bcs)
+solveNonlinear(F,w,bcs)
 
 ########## Output: ##############
 

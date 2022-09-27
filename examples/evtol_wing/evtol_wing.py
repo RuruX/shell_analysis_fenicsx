@@ -14,6 +14,7 @@ from dolfinx.mesh import locate_entities
 import numpy as np
 from mpi4py import MPI
 from shell_analysis_fenicsx import *
+from shell_analysis_fenicsx.read_properties import readCLT, sortIndex
 
 tri_mesh = [
             "eVTOL_wing_half_tri_77020_103680.xdmf", # error
@@ -26,13 +27,16 @@ quad_mesh = [
             "eVTOL_wing_half_quad_81475_54228.xdmf", # error
             "eVTOL_wing_half_quad_107695_68343.xdmf", # error
             "eVTOL_wing_half_quad_135957_85152.xdmf",] # error
-test = 1
+test = 2
 # file_name = quad_mesh[test]
 file_name = tri_mesh[test]
-mesh_file = "../../mesh/mesh-examples/evtol-wing/" + file_name
+path = "../../mesh/mesh-examples/evtol-wing/"
+mesh_file = path + file_name
 with XDMFFile(MPI.COMM_WORLD, mesh_file, "r") as xdmf:
        mesh = xdmf.read_mesh(name="Grid")
 # sometimes it should be `name="mesh"` to avoid the error
+nel = mesh.topology.index_map(mesh.topology.dim).size_local
+nn = mesh.topology.index_map(0).size_local
 
 E_val = 6.8E10 # unit: Pa (N/m^2)
 nu_val = 0.35
@@ -44,7 +48,25 @@ f_d = 40254*h_val # force per unit area (unit: N/m^2)
 E = Constant(mesh,E_val) # Young's modulus
 nu = Constant(mesh,nu_val) # Poisson ratio
 h = Constant(mesh,h_val) # Shell thickness
-f = as_vector([0,0,f_d]) # Body force per unit area
+
+################### Aerodynamic loads ###################
+# Uniform loads
+# f = as_vector([0,0,f_d]) # Body force per unit area
+
+############### Read and apply nodal force #################
+# Element-wise loads
+frcs = np.reshape(np.loadtxt(path+'aero_force_test.txt'),(nn,3))
+f_nodes = np.arange(nn)
+# map input nodal indices to dolfinx index structure
+coords = mesh.geometry.x
+node_indices = mesh.geometry.input_global_indices
+f_array = sortIndex(frcs, f_nodes, node_indices)
+
+# apply array in function space
+VF = VectorFunctionSpace(mesh, ("CG", 1))
+f = Function(VF)
+f.vector.setArray(f_array) # Body force per unit area
+###############################################################
 
 element_type = "CG2CG1"
 #element_type = "CG2CR1"
@@ -74,9 +96,9 @@ u0.vector.set(0.0)
 
 
 locate_BC1 = locate_dofs_geometrical((W.sub(0), W.sub(0).collapse()[0]),
-                                    lambda x: np.isclose(x[1], 0. ,atol=1e-6))
+                                    lambda x: np.less(x[1], 0.55))
 locate_BC2 = locate_dofs_geometrical((W.sub(1), W.sub(1).collapse()[0]),
-                                    lambda x: np.isclose(x[1], 0. ,atol=1e-6))
+                                    lambda x: np.less(x[1], 0.55))
 ubc=  Function(W)
 with ubc.vector.localForm() as uloc:
      uloc.set(0.)
