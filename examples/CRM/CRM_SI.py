@@ -1,6 +1,10 @@
 """
 Structural analysis for the common research model (CRM)
 -----------------------------------------------------------
+Note: to run the example with the mesh files associated, you need to
+have `git lfs` installed to download the actual mesh files. Please
+refer to instructions on their official website at https://git-lfs.github.com/
+-----------------------------------------------------------
 Run the test with different meshes by
 
 `python3 CRM_SI.py --eleSize YOUR_CHOICE_OF_SIZE`

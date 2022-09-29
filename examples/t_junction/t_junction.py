@@ -4,6 +4,11 @@ Structural analysis of a T-shaped beam
 Reference solution:
  https://web.me.iastate.edu/jmchsu/files/Herrema_et_al-2018-CMAME.pdf
 
+-----------------------------------------------------------
+Note: to run the example with the mesh files associated, you need to
+have `git lfs` installed to download the actual mesh files. Please
+refer to instructions on their official website at https://git-lfs.github.com/
+-----------------------------------------------------------
 """
 from dolfinx.io import XDMFFile
 from dolfinx.fem.petsc import (assemble_vector, assemble_matrix, apply_lifting)

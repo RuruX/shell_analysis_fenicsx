@@ -1,6 +1,11 @@
 """
 Structural analysis of the classic cantilever beam problem
 
+-----------------------------------------------------------
+Note: to run the example with the mesh files associated, you need to
+have `git lfs` installed to download the actual mesh files. Please
+refer to instructions on their official website at https://git-lfs.github.com/
+-----------------------------------------------------------
 """
 from dolfinx.io import XDMFFile
 from dolfinx.fem import (locate_dofs_topological, locate_dofs_geometrical,

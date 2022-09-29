@@ -1,6 +1,11 @@
 """
 Structural analysis of the classic shell obstacle course:
 1/3: Scordelis-Lo Roof
+-----------------------------------------------------------
+Note: to run the example with the mesh files associated, you need to
+have `git lfs` installed to download the actual mesh files. Please
+refer to instructions on their official website at https://git-lfs.github.com/
+-----------------------------------------------------------
 """
 
 from dolfinx.io import XDMFFile

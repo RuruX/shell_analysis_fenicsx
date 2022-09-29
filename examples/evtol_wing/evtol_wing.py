@@ -5,6 +5,11 @@ Boeing 777-9x Specifications: (units: m/ft, kg/lb)
 Maximum take-off weight	352,400kg/777,000lb
 Wing span (extended)    71.75m/235.42ft
 Overall length	        76.73m/251.75ft
+-----------------------------------------------------------
+Note: to run the example with the mesh files associated, you need to
+have `git lfs` installed to download the actual mesh files. Please
+refer to instructions on their official website at https://git-lfs.github.com/
+-----------------------------------------------------------
 """
 from dolfinx.io import XDMFFile
 from dolfinx.fem.petsc import (assemble_vector, assemble_matrix, apply_lifting)
