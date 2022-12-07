@@ -218,7 +218,10 @@ u_exact_i = u_exact()
 
 def wdot_vector(w, w_old, wdot_old):
     return 2/dt*w.vector - 2/dt*w_old.vector - wdot_old.vector
-
+def assembleStrainEnergy(w):
+    elastic_model = ElasticModel(mesh, w, material_model.CLT)
+    elastic_energy = elastic_model.elasticEnergy(E, h, dx_inplane, dx_shear)
+    return assemble_scalar(form(elastic_energy))
 ####### Time stepping #################
 for i in range(0,Nsteps):
 
@@ -236,6 +239,7 @@ for i in range(0,Nsteps):
     wdot_old.vector[:] = wdot_vector(w,w_old,wdot_old)
     w_old.interpolate(w)
 
+    print("total strain energy:", assembleStrainEnergy(w))
     # Save solution to XDMF format
     xdmf_file.write_function(w.sub(0), t)
     xdmf_file_rotation.write_function(w.sub(1), t)
@@ -245,7 +249,9 @@ for i in range(0,Nsteps):
 
     # Record the displacement
     u_output[i+1] = w.sub(0).eval(coord, cell_id)[2]
+    print("max uz:", np.max(abs(u_output[i+1])))
     L2_error[i] = sqrt(assemble_scalar(form((u - u_exact_func)**2*dx)))
+    
 
 ########## Outputs: ##############
 u_output_max = np.full((Nsteps+1), np.max(u_output))

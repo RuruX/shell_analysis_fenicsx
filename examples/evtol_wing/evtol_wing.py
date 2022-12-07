@@ -13,6 +13,7 @@ refer to instructions on their official website at https://git-lfs.github.com/
 """
 from dolfinx.io import XDMFFile
 from dolfinx.fem.petsc import (assemble_vector, assemble_matrix, apply_lifting)
+from dolfinx.fem import assemble_scalar
 from dolfinx.fem import (locate_dofs_topological, locate_dofs_geometrical,
                         dirichletbc, form, Constant, VectorFunctionSpace)
 from dolfinx.mesh import locate_entities
@@ -83,6 +84,11 @@ element = ShellElement(
 #                inplane_deg=3,
 #                shear_deg=3
                 )
+
+# VE1 = VectorElement("Lagrange",mesh.ufl_cell(),1)
+# WE = MixedElement([VE1,VE1])
+# W = FunctionSpace(mesh,WE)
+
 W = element.W
 w = Function(W)
 dx_inplane, dx_shear = element.dx_inplane, element.dx_shear
@@ -113,8 +119,11 @@ bcs = [dirichletbc(ubc, locate_BC1, W.sub(0)),
        ]
 
 ########## Solve with Newton solver wrapper: ##########
+from timeit import default_timer
+start = default_timer()
 solveNonlinear(F,w,bcs)
-
+stop = default_timer()
+print("Time for solve nonlinear:", stop-start)
 ########## Output: ##############
 
 u_mid, _ = w.split()
@@ -122,10 +131,16 @@ u_mid, _ = w.split()
 dofs = len(w.vector.getArray())
 
 uZ = computeNodalDisp(w.sub(0))[2]
+x_tip = [0.307515,5.31806,0.541493]
+cell_tip = 115587
+uZ_tip = u_mid.eval(x_tip, cell_tip)[-1]
+strain_energy = assemble_scalar(form(elastic_energy))
 print("-"*50)
 print("-"*8, file_name, "-"*9)
 print("-"*50)
-print("Tip deflection:", max(uZ))
+# print("Tip deflection:", max(uZ))
+print("Tip deflection:", uZ_tip)
+print("Total strain energy:", strain_energy)
 print("  Number of elements = "+str(mesh.topology.index_map(mesh.topology.dim).size_local))
 print("  Number of vertices = "+str(mesh.topology.index_map(0).size_local))
 print("  Number of total dofs = ", dofs)

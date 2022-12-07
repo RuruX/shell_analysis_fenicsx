@@ -13,15 +13,19 @@ refer to instructions on their official website at https://git-lfs.github.com/
 """
 
 from dolfinx.io import XDMFFile
-from dolfinx.fem import locate_dofs_topological, Constant, dirichletbc
+from dolfinx.fem import assemble_scalar, locate_dofs_topological, Constant, dirichletbc
 from dolfinx.mesh import locate_entities
 import numpy as np
 from mpi4py import MPI
 from shell_analysis_fenicsx import *
 
-icemmesh = ["uCRM-9_wingbox_quad_coarse.xdmf",
-            "uCRM-9_wingbox_quad_medium.xdmf",
-            "uCRM-9_wingbox_quad_fine.xdmf",]
+# icemmesh = ["uCRM-9_wingbox_quad_coarse.xdmf",
+#             "uCRM-9_wingbox_quad_medium.xdmf",
+#             "uCRM-9_wingbox_quad_fine.xdmf",]
+icemmesh = ["uCRM-9_coarse.xdmf", #Tip deflection: 0.17673840967897833
+            "uCRM-9_medium.xdmf", #Tip deflection: 0.1778104969452804
+            "uCRM-9_fine.xdmf"] #Tip deflection: 0.1780523716805102
+
 # --------------------------------------------------
 # -------- uCRM-9_coarse.xdmf ---------
 # --------------------------------------------------
@@ -41,15 +45,17 @@ icemmesh = ["uCRM-9_wingbox_quad_coarse.xdmf",
 #   Number of elements = 97920
 #   Number of vertices = 95286
 
-PATH_ICEM = "../../mesh/mesh-examples/uCRM-9/"
+PATH_ICEM = "../../mesh/mesh-examples/uCRM-9-ICEM/"
 test = 0
 
 PATH = PATH_ICEM
 file_name = icemmesh[test]
 
 mesh_file = PATH + file_name
-with XDMFFile(MPI.COMM_WORLD, mesh_file, "r") as xdmf:
+
+with XDMFFile(MPI.COMM_WORLD, mesh_file, "r", encoding=XDMFFile.Encoding.ASCII) as xdmf:
        mesh = xdmf.read_mesh(name="Grid")
+
 # sometimes it should be `name="mesh"` to avoid the error
 
 
@@ -112,10 +118,13 @@ with XDMFFile(MPI.COMM_WORLD, "output_finest_tri.xdmf", "w") as xdmf:
     xdmf.write_mesh(mesh)
     xdmf.write_function(u_mid)
 
+strain_energy = assemble_scalar(form(elastic_energy))
 print("-"*50)
 print("-"*8, file_name, "-"*9)
 print("-"*50)
 print("Tip deflection:", max(w.sub(0).sub(2).collapse().vector.getArray()))
+
+print("Total strain energy:", strain_energy)
 print("  Number of elements = "+str(mesh.topology.index_map(mesh.topology.dim).size_local))
 print("  Number of vertices = "+str(mesh.topology.index_map(0).size_local))
 print("  Number of total dofs = ", len(w.vector.getArray()))
