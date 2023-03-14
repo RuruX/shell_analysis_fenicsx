@@ -219,7 +219,8 @@ class ElasticModel(object):
                 self.bendingEnergy(dx_inplane) + \
                 self.drillingEnergy(E, h)
 
-    def weakFormResidual(self, elasticEnergy, f):
+    def weakFormResidual(self, elasticEnergy, f, 
+                        penalty=False, g=None, dss=None, dSS=None):
 
         """
         Returns the PDE residual of the elasticity problem in weak form,
@@ -228,8 +229,116 @@ class ElasticModel(object):
 
         dw = TestFunction(self.W)
         self.du_mid,self.dtheta = split(dw)
-        return derivative(elasticEnergy,self.w,dw) - inner(f,self.du_mid)*dx
+        retval = derivative(elasticEnergy,self.w,dw) - inner(f,self.du_mid)*dx
+        if penalty:
+            retval += self.penaltyResidual(self.w, dw, g, dss, dSS)
+        return retval
 
+    def penaltyResidual(self,u,v,g,dss,dSS):
+        beta = Constant(self.mesh, 1E15)
+        h_E = CellDiameter(self.mesh)
+        n = CellNormal(self.mesh)
+        return beta/h_E*inner(u-g, v)*dss + \
+                (beta/h_E*inner(u-g, v))("+")*dSS + \
+                (beta/h_E*inner(u-g, v))("-")*dSS
+
+
+
+class ShellStressRM:
+    """
+    Class to compute Reissner-Mindlin shell's stresses using
+    linear elastic material model.
+    """
+    def __init__(self, mesh, w, h_th, E, nu):
+        """
+        Parameters
+        ----------
+        w : dolfin Function. Numerical solution of problem.
+        E : dolfin constant. Material's Young's modulus
+        nu : dolfin constant. Material's Poisson's ratio
+        h_th : dolfin constant. Shell's thickness
+        """
+        self.u_mid, self.theta = split(w)
+        # Normal vector to each element is the third basis vector of the
+        # local orthonormal basis (indexed from zero for consistency with Python):
+        self.E2 = E2 = CellNormal(mesh)
+
+        # Local in-plane orthogonal basis vectors, with 0-th basis vector along
+        # 0-th parametric coordinate direction (where Jacobian[i,j] is the partial
+        # derivatiave of the i-th physical coordinate w.r.t. to j-th parametric
+        # coordinate):
+        A0 = as_vector([Jacobian(mesh)[j,0] for j in range(0,3)])
+        self.E0 = E0 = A0/sqrt(dot(A0,A0))
+        self.E1 = E1 = cross(E2,E0)
+
+        # Matrix for change-of-basis to/from local/global Cartesian coordinates;
+        # E01[i,j] is the j-th component of the i-th basis vector:
+        self.E01 = E01 = as_matrix([[E0[i] for i in range(0,3)],
+                         [E1[i] for i in range(0,3)]])
+        self.G = E / 2 / (1 + nu)
+        self.D = (E/(1.0 - nu*nu))*as_matrix([[1.0,  nu,   0.0         ],
+                                     [nu,   1.0,  0.0         ],
+                                     [0.0,  0.0,  0.5*(1.0-nu)]])
+
+    def u(self, xi2):
+        """
+        Displacement at through-thickness coordinate xi2:
+        Formula (7.1) from http://www2.nsysu.edu.tw/csmlab/fem/dyna3d/theory.pdf
+        """
+        return self.u_mid - xi2*cross(self.E2,self.theta)
+
+
+    def gradu_local(self, xi2):
+        """
+        In-plane gradient components of displacement in the local orthogonal
+        coordinate system:
+        """
+        gradu_global = grad(self.u(xi2)) # (3x3 matrix, zero along E2 direction)
+        i,j,k,l = indices(4)
+        return as_tensor(self.E01[i,k]*gradu_global[k,l]*self.E01[j,l],(i,j))
+
+
+    def eps(self, xi2):
+        """
+        In-plane strain components of local orthogonal coordinate system at
+        through-thickness coordinate xi2, in Voigt notation:
+        """
+        eps_mat = sym(self.gradu_local(xi2))
+        return as_vector([eps_mat[0,0], eps_mat[1,1], 2*eps_mat[0,1]])
+
+    def gamma_2(self, xi2):
+        """
+        Transverse shear strains in local coordinates at given xi2, as a vector
+        such that gamma_2(xi2)[i] = 2*eps[i,2], for i in {0,1}
+        """
+        dudxi2_global = -cross(self.E2,self.theta)
+        i,j = indices(2)
+        dudxi2_local = as_tensor(dudxi2_global[j]*self.E01[i,j],(i,))
+        gradu2_local = as_tensor(dot(self.E2,grad(self.u(xi2)))[j]*self.E01[i,j],(i,))
+        return dudxi2_local + gradu2_local
+
+    def cauchyStresses(self, xi2):
+
+        """
+        Returns the constitutive matrices for isotropic materials
+        """
+        # out-of-plane shear
+        sigma_shear = self.G*self.gamma_2(xi2)
+        # in-plane stresses
+        sigma_hat = self.D*self.eps(xi2)
+        return (sigma_hat, sigma_shear)
+
+    def vonMisesStress(self, xi2):
+        """
+        Returns Reissner-Mindlin shell's von Mises stress at the through
+        thickness coordinate ``xi2`` (-h_th/2 <= xi2 <= h_th/2).
+        """
+        sigma_hat, sigma_shear = self.cauchyStresses(xi2)
+        # von Mises stress formula with plane stress
+        vonMises = sqrt(sigma_hat[0]**2 - sigma_hat[0]*sigma_hat[1]
+                        + sigma_hat[1]**2 + 3*sigma_hat[2]**2
+                        + 3*sigma_shear[0]**2 + 3*sigma_shear[1]**2)
+        return vonMises
 
 class DynamicElasticModel(object):
 
