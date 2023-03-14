@@ -117,7 +117,6 @@ with ubc.vector.localForm() as uloc:
 bcs = [dirichletbc(ubc, locate_BC1, W.sub(0)),
         dirichletbc(ubc, locate_BC2, W.sub(1)),
        ]
-
 ########## Solve with Newton solver wrapper: ##########
 from timeit import default_timer
 start = default_timer()
@@ -146,7 +145,16 @@ print("  Number of vertices = "+str(mesh.topology.index_map(0).size_local))
 print("  Number of total dofs = ", dofs)
 print("-"*50)
 
-
 with XDMFFile(MPI.COMM_WORLD, "solutions/u_mid_tri_"+str(dofs)+".xdmf", "w") as xdmf:
     xdmf.write_mesh(mesh)
     xdmf.write_function(u_mid)
+
+shell_stress_RM = ShellStressRM(mesh, w, h, E, nu)
+von_Mises_top = shell_stress_RM.vonMisesStress(h/2)
+V1 = FunctionSpace(mesh, ('CG', 1))
+von_Mises_top_func = Function(V1)
+project(von_Mises_top, von_Mises_top_func, lump_mass=True)
+
+with XDMFFile(MPI.COMM_WORLD, "solutions/von_Mises_top"+str(dofs)+".xdmf", "w") as xdmf:
+    xdmf.write_mesh(mesh)
+    xdmf.write_function(von_Mises_top_func)
