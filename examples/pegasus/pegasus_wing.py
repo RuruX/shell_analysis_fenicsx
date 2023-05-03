@@ -37,7 +37,7 @@ f_d = 10. # force per unit area (unit: N/m^2)
 E = Constant(mesh,E_val) # Young's modulus
 nu = Constant(mesh,nu_val) # Poisson ratio
 
-################### Constant thickness  ###################
+# ################## Constant thickness  ###################
 # h = Constant(mesh,h_val) # Shell thickness
 
 ################### Varying thickness distribution ###################
@@ -45,7 +45,7 @@ hrcs = np.reshape(np.loadtxt(path+'pegasus_t_med_SI.csv'),(nn,1))
 h_nodal = np.arange(nn)
 node_indices = mesh.geometry.input_global_indices
 h_array = sortIndex(hrcs, h_nodal, node_indices)
-############# Apply element-wise thickness ###################
+## Apply element-wise thickness ###
 VT = FunctionSpace(mesh, ("CG", 1))
 h = Function(VT)
 h.vector.setArray(h_array)
@@ -129,23 +129,7 @@ uZ = computeNodalDisp(w.sub(0))[2]
 # cell_tip = 6402
 # uZ_tip = u_mid.eval(x_tip, cell_tip)[-1]
 strain_energy = assemble_scalar(form(elastic_energy))
-print("-"*50)
-print("-"*8, file_name, "-"*9)
-print("-"*50)
-print("Tip deflection:", max(uZ))
-# print("Tip deflection:", uZ_tip)
-print("Total strain energy:", strain_energy)
-print("  Number of elements = "+str(mesh.topology.index_map(mesh.topology.dim).size_local))
-print("  Number of vertices = "+str(mesh.topology.index_map(0).size_local))
-print("  Number of total dofs = ", dofs)
-print("-"*50)
 
-with XDMFFile(MPI.COMM_WORLD, "solutions/u_mid_tri_"+str(dofs)+".xdmf", "w") as xdmf:
-    xdmf.write_mesh(mesh)
-    xdmf.write_function(u_mid)
-with XDMFFile(MPI.COMM_WORLD, "solutions/thickness_nodal_"+str(dofs)+".xdmf", "w") as xdmf:
-    xdmf.write_mesh(mesh)
-    xdmf.write_function(h)
 
 shell_stress_RM = ShellStressRM(mesh, w, h, E, nu)
 von_Mises_top = shell_stress_RM.vonMisesStress(h/2)
@@ -153,6 +137,49 @@ V1 = FunctionSpace(mesh, ('CG', 1))
 von_Mises_top_func = Function(V1)
 project(von_Mises_top, von_Mises_top_func, lump_mass=True)
 
-with XDMFFile(MPI.COMM_WORLD, "solutions/von_Mises_top"+str(dofs)+".xdmf", "w") as xdmf:
+def max_vm_stress(vm_stress,rho=200.,alpha=None,m=1e-6):
+    """
+    Compute the maximum von Mises stress via p-norm
+    `rho` is the Constraint aggregation factor
+    """
+    pnorm = (m*vm_stress)**rho*dx
+    pnorm_val = assemble_scalar(form(pnorm))
+    if pnorm_val == 0:
+        pnorm_val = 1e-8
+    if alpha == None:
+        # alpha is an estimation of the surface area
+        alpha_form = Constant(mesh,1.0)*dx
+        alpha = assemble_scalar(form(alpha_form))
+    # print("pnorm_val", pnorm_val)
+    # print("alpha", alpha)
+    max_vm_stress = 1/m*(1/alpha*pnorm_val)**(1/rho)
+    return max_vm_stress
+
+
+print("-"*50)
+print("-"*8, file_name, "-"*9)
+print("-"*50)
+print("Tip deflection:", max(uZ))
+# print("Tip deflection:", uZ_tip)
+print("Total strain energy:", strain_energy)
+print("Exact maximum von Mises stress:", np.max(von_Mises_top_func.vector.getArray()))
+# rho_list = [50, 100, 200, 400, 600, 800, 1000]
+rho_list = [1000]
+print("rho     ", "Maximum von von Mises stress")
+for rho in rho_list:
+    print(rho, max_vm_stress(von_Mises_top_func,rho=rho))
+print("  Number of elements = "+str(mesh.topology.index_map(mesh.topology.dim).size_local))
+print("  Number of vertices = "+str(mesh.topology.index_map(0).size_local))
+print("  Number of total dofs = ", dofs)
+print("-"*50)
+
+with XDMFFile(MPI.COMM_WORLD, "solutions_varied_thickness/u_mid_tri_"+str(dofs)+".xdmf", "w") as xdmf:
+    xdmf.write_mesh(mesh)
+    xdmf.write_function(u_mid)
+with XDMFFile(MPI.COMM_WORLD, "solutions_varied_thickness/thickness_nodal_"+str(dofs)+".xdmf", "w") as xdmf:
+    xdmf.write_mesh(mesh)
+    xdmf.write_function(h)
+
+with XDMFFile(MPI.COMM_WORLD, "solutions_varied_thickness/von_Mises_top"+str(dofs)+".xdmf", "w") as xdmf:
     xdmf.write_mesh(mesh)
     xdmf.write_function(von_Mises_top_func)
