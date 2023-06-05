@@ -219,7 +219,7 @@ class ElasticModel(object):
                 self.bendingEnergy(dx_inplane) + \
                 self.drillingEnergy(E, h)
 
-    def weakFormResidual(self, elasticEnergy, f, 
+    def weakFormResidual(self, elasticEnergy, f,
                         penalty=False, g=None, dss=None, dSS=None):
 
         """
@@ -339,6 +339,7 @@ class ShellStressRM:
                         + sigma_hat[1]**2 + 3*sigma_hat[2]**2
                         + 3*sigma_shear[0]**2 + 3*sigma_shear[1]**2)
         return vonMises
+
 
 class DynamicElasticModel(object):
 
