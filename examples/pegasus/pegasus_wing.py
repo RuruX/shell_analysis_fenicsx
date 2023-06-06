@@ -95,8 +95,9 @@ from FSI_coupling.shellmodule_csdl_interface import (
 
 
 # Define force functions and aero-elastic coupling object ########
-coupling_obj = FEniCSx_concentrated_load_coupling(shell_mesh, x0,
-                    W, RBF_width_par=2.)
+print("x0 shape:", np.shape(x0))
+coupling_obj = FEniCSx_concentrated_load_coupling(shell_mesh, x0[:,0,:],
+                    W, RBF_width_par=.5, RBF_func=RadialBasisFunctions.Gaussian)
 # print("G mat shape:", np.shape(coupling_obj.G_mat.map))
 f_array = coupling_obj.compute_dist_solid_force_from_point_load(f_c)
 
@@ -104,10 +105,28 @@ f_array = coupling_obj.compute_dist_solid_force_from_point_load(f_c)
 # apply array in function space
 VF = VectorFunctionSpace(shell_mesh, ("CG", 1))
 f = Function(VF)
-f.vector.setArray(0.001*f_array) # Body force per unit area
 
-# ###############################################################
+##################### Verify the force vector ###################
+fx_sum = 0.
+fy_sum = 0.
+fz_sum = 0.
+f_c_sum = np.sum(f_c.reshape(17,3),axis=0)
+for i in range(nn):
+    fx_sum += f_array[3*i]
+    fy_sum += f_array[3*i+1]
+    fz_sum += f_array[3*i+2]
+print("-"*60)
+print("                               Projected      "+"     Original     ")
+print("-"*60)
+print("Sum of forces in x-direction:", fx_sum, f_c_sum[0])
+print("Sum of forces in y-direction:", fy_sum, f_c_sum[1])
+print("Sum of forces in z-direction:", fz_sum, f_c_sum[2])
+print("-"*60)
+#################################################################
+exit()
 
+
+f.vector.setArray(0.001*f_array) # Nodal force in Newton
 
 #### Compute the CLT model from the material properties (for single-layer material)
 material_model = MaterialModel(E=E,nu=nu,h=h)
@@ -152,15 +171,8 @@ dolfinx.fem.set_bc(b, bcs)
 
 
 ######### Solve the linear system with KSP solver ############
-solveKSP_mumps(A, b, w.vector)
+# solveKSP_mumps(A, b, w.vector)
 
-# ########## Solve with Newton solver wrapper: ##########
-# from timeit import default_timer
-# start = default_timer()
-# solveNonlinear(F,w,bcs,log=True)
-# stop = default_timer()
-# print("Time for solve nonlinear:", stop-start)
-# ########## Output: ##############
 
 u_mid, _ = w.split()
 
@@ -199,7 +211,7 @@ def max_vm_stress_cg1(vm_stress,dx,rho=200,alpha=None,m=1e-6):
 
 def max_vm_stress_exp(vm_stress,dx,rho=200,alpha=None,m=1e-6):
     """
-    Compute the maximum von Mises stress via p-norm
+    Compute the UFL form of then maximum von Mises stress via p-norm
     `rho` is the Constraint aggregation factor
     """
     pnorm = (m*vm_stress)**rho*dx
