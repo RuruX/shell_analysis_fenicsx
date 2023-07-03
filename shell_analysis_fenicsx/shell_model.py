@@ -242,7 +242,14 @@ class ElasticModel(object):
                 (beta/h_E*inner(u-g, v))("+")*dSS + \
                 (beta/h_E*inner(u-g, v))("-")*dSS
 
-
+    def inertialResidual(self, rho, h):
+        h_mesh = CellDiameter(self.mesh)
+        retval = 0
+        retval += rho*h*inner(self.u_mid, self.du_mid)*dx
+        retval += rho*h*h_mesh**2*inner(self.theta, self.dtheta)*dx
+        drilling_inertia = Constant(self.mesh,1.0)*h**3*dx
+        # retval += drilling_inertia
+        return retval
 
 class ShellStressRM:
     """

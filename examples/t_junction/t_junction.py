@@ -28,6 +28,9 @@ t_beam = [#### quad mesh ####
 filename = "../../mesh/mesh-examples/t-junction/"+t_beam[2]
 with dolfinx.io.XDMFFile(MPI.COMM_WORLD, filename, "r") as xdmf:
         mesh = xdmf.read_mesh(name="Grid")
+# sometimes it should be `name="mesh"` to avoid the error
+nel = mesh.topology.index_map(mesh.topology.dim).size_local
+nn = mesh.topology.index_map(0).size_local
 
 
 E_val = 1e7
@@ -71,11 +74,32 @@ bcs = [dirichletbc(u0,locate_fixed_BC)]
 
 ########### Apply the point load #############################
 delta = Delta(x0=np.array([20.0, 0.0, 0.0]), f_p=(0.,0.,f_val))
+
+V1 = VectorFunctionSpace(mesh,("CG",1))
+f_1 = Function(V1)
+
+dofs = locate_dofs_geometrical(V1,lambda x: np.isclose(x.T,[20.0, 0.0, 0.0]).all(axis=1))
+
+f_1.x.array[dofs] = f_val
+print(f_1.vector.getArray()[dofs])
+# print(f_array)
+# delta = Delta_mp_1(x0=np.array([[20.0, 0.0, 0.0],[10.0, 0.0, 0.0]]), f_p=np.array([[0.,0.,f_val],[0.,0.,f_val]]))
 f1 = Function(W)
 f1_0,_ = f1.split()
-f1_0.interpolate(delta.eval)
+print("call evaluation...")
+# f1_0.interpolate(delta.eval)
+f1_0.interpolate(f_1)
 
-
+f1_x = computeNodalDisp(f1.sub(0))[0]
+f1_y = computeNodalDisp(f1.sub(0))[1]
+f1_z = computeNodalDisp(f1.sub(0))[2]
+print("-"*60)
+print("                               Projected CG2   "+"     Original     ")
+print("-"*60)
+print("Sum of forces in x-direction:", np.sum(f1_x))
+print("Sum of forces in y-direction:", np.sum(f1_y))
+print("Sum of forces in z-direction:", np.sum(f1_z))
+print("-"*60)
 # Assemble linear system
 a = derivative(F,w)
 L = -F

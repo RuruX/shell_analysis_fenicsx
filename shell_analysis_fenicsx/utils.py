@@ -106,6 +106,63 @@ class Delta:
                 values[0][i] = self.f_p[0]
                 values[1][i] = self.f_p[1]
                 values[2][i] = self.f_p[2]
+                print(i)
+        print(np.sum(values,axis=1))
+        return values
+
+class Delta_cpt:
+    """
+    Delta function on closest points
+    """
+    def __init__(self, x0, f_p, **kwargs):
+        self.x0 = x0
+        self.f_p = f_p
+
+    def eval(self, x):
+        dist = []
+        values = np.zeros((3, x.shape[1]))
+        closest_local = []
+        for i in range(x.shape[1]):
+            x_i = np.array([x[0][i], x[1][i], x[2][i]])
+            dist_i = np.linalg.norm(x_i-self.x0)
+            dist.append(dist_i)
+
+        closest_local = np.argsort(np.array(dist))[:4]
+        print(closest_local)
+        print("applying forces to the closest point...")
+        values[0][closest_local] = self.f_p[0]
+        values[1][closest_local] = self.f_p[1]
+        values[2][closest_local] = self.f_p[2]
+        return values
+
+class Delta_mpt:
+    """
+    Multi-point delta function applied on the closest points
+    """
+    def __init__(self, x0, f_p, **kwargs):
+        self.x0 = x0
+        self.f_p = f_p
+
+    def eval(self, x):
+        values = np.zeros((3, x.shape[1]))
+        for j in range(self.x0.shape[0]):
+            x0_j = self.x0[:][j]
+            f_p_j = self.f_p[:][j]
+            print(x0_j, f_p_j)
+
+            dist = []
+            closest_local = []
+            for i in range(x.shape[1]):
+                x_i = np.array([x[0][i], x[1][i], x[2][i]])
+                dist_i = np.linalg.norm(x_i-x0_j)
+                dist.append(dist_i)
+
+            closest_local = np.argsort(np.array(dist))[:4]
+            print(closest_local)
+            print("applying forces to the closest point...")
+            values[0][closest_local] = f_p_j[0]
+            values[1][closest_local] = f_p_j[1]
+            values[2][closest_local] = f_p_j[2]
         return values
 
 
