@@ -255,6 +255,26 @@ def max_vm_stress_exp(vm_stress,dx,rho=200,alpha=None,m=1e-6):
     # max_vm_stress = 1/alpha*pnorm_val
     return max_vm_stress_form
 
+def max_vm_stress_pre(vm_stress,dx,rho=200,alpha=None,m=1e-6):
+    """
+    Compute the UFL form of then maximum von Mises stress via p-norm
+    `rho` is the Constraint aggregation factor
+    """
+    pnorm = (m*vm_stress)**rho*dx
+
+    if alpha == None:
+        # alpha is a parameter based on the surface area
+        alpha_form = Constant(shell_mesh,1.0)*dx
+        alpha = assemble_scalar(form(alpha_form))
+
+    max_vm_stress_pre = 1/alpha*pnorm
+    return max_vm_stress_pre
+
+def max_vm_stress(vm_stress,dx,rho=200,alpha=None,m=1e-6):
+    max_pre = max_vm_stress_pre(vm_stress,dx,rho,alpha,m)
+    max_vm_stress = 1/m*(assemble_scalar(form(max_pre)))**(1/rho)
+    return max_vm_stress
+
 def dmax_vmdw(w,vm_stress,dx,rho=200,alpha=None,m=1e-6):
     max_vm_form = max_vm_stress_exp(vm_stress,dx,rho=200,alpha=None,m=1e-6)
     return derivative(max_vm_form, w)
@@ -279,6 +299,7 @@ rho_list = [50, 100, 200]
 # rho_list = [200]
 print("rho     ", "Maximum von von Mises stress")
 for rho in rho_list:
+    print(rho, max_vm_stress(von_Mises_top,dx=dxx,rho=rho,m=1e-6, alpha=alpha))
     print(rho, max_vm_stress_exp(von_Mises_top,dx=dxx,rho=rho,m=1e-6, alpha=alpha))
 print("  Number of elements = "+str(shell_mesh.topology.index_map(shell_mesh.topology.dim).size_local))
 print("  Number of vertices = "+str(shell_mesh.topology.index_map(0).size_local))
