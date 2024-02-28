@@ -58,6 +58,13 @@ class ShellElement():
             WE = MixedElement([VE2,VE1])
             W = FunctionSpace(mesh,WE)
             
+        # CG1CG1
+        elif(element_type == "CG1CG1"):
+            # ------ CG1-CG1 ----------
+            VE1 = VectorElement("Lagrange",cell,1)
+            WE = MixedElement([VE1,VE1])
+            W = FunctionSpace(mesh,WE)
+            
         # Alnord-Falk (enriched elements) not supported by DOLFINX
         else:
             print("Invalid element type.")

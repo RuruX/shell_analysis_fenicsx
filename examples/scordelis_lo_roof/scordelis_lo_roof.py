@@ -112,7 +112,7 @@ dx_inplane, dx_shear = element.dx_inplane, element.dx_shear
 # F = elastic_model.weakFormResidual(elastic_energy, f)
 
 #### Compute the CLT model from the material properties (for single-layer material)
-material_model = MaterialModel(E=E,nu=nu,h=h,BOT=True) # Simple isotropic material
+material_model = MaterialModel(E=E,nu=nu,h=h) # Simple isotropic material
 elastic_model = ElasticModel(mesh,w,material_model.CLT)
 elastic_energy = elastic_model.elasticEnergy(E, h, dx_inplane,dx_shear)
 F = elastic_model.weakFormResidual(elastic_energy, f)
@@ -156,9 +156,12 @@ num_el = mesh.topology.index_map(mesh.topology.dim).size_local
 num_vertice = mesh.topology.index_map(0).size_local
 num_dof = len(w.vector.getArray())
 uZ = computeNodalDisp(w.sub(0))[2]
+shell_stress = ShellStressRM(mesh, w, h, E, nu)
+von_mises_top = shell_stress.projectedvonMisesStress(h/2)
 # Comparing the results to the numerical solution
 print("Scordelis-Lo roof theory tip deflection: v_tip = -0.3018")
 print("Tip deflection:", min(uZ))
+print("Maximum von Mises stress:", str(max(von_mises_top.x.array)))
 print("  Number of elements = "+str(num_el))
 print("  Number of vertices = "+str(num_vertice))
 print("  Number of DoFs = "+str(num_dof))
@@ -168,7 +171,9 @@ u_mid, _ = w.split()
 with XDMFFile(MPI.COMM_WORLD, "solutions/u_mid.xdmf", "w") as xdmf:
     xdmf.write_mesh(mesh)
     xdmf.write_function(u_mid)
-
+with XDMFFile(MPI.COMM_WORLD, "solutions/von_mises_top.xdmf", "w") as xdmf:
+    xdmf.write_mesh(mesh)
+    xdmf.write_function(von_mises_top)
 from shell_analysis_fenicsx.pyvista_plotter import plotter_3d
 plottor = plotter_3d(mesh, uZ, 'Vertical displacement')
 plottor.show()

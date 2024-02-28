@@ -18,6 +18,34 @@ from petsc4py import PETSc
 import numpy as np
 
 
+def projectPointForce(f_array, target_func, dx_=dx, bcs=[]):
+
+    """
+    L2 projection of an UFL object (expression) to targeted function.
+    Typically used for visualization in post-processing.
+    `lump_mass` is an optional boolean argument set to be False by default;
+    it's set to be True when lumping is needed for preventing oscillation
+    when projecting discontinous data.
+    """
+
+    # Ensure we have a mesh and attach to measure
+    V = target_func.function_space
+    # Define variational problem for projection
+    w = TestFunction(V)
+    Pv = TrialFunction(V)
+
+    a = inner(Pv,w)*dx_ #lhs(res)
+    # Assemble linear system
+    A = assemble_matrix(form(a), bcs)
+    A.assemble()
+    b = A.createVecLeft()
+    b.setArray(f_array)
+    apply_lifting(b, [form(a)], [bcs])
+    b.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+    set_bc(b, bcs)
+    solver = PETSc.KSP().create(A.getComm())
+    solver.setOperators(A)
+    solver.solve(b, target_func.vector)
 
 def project(v, target_func, bcs=[], lump_mass=False):
 
@@ -158,6 +186,7 @@ class Delta_mpt:
                 dist.append(dist_i)
 
             closest_local = np.argsort(np.array(dist))[:4]
+            print(np.array(dist)[closest_local])
             print(closest_local)
             print("applying forces to the closest point...")
             values[0][closest_local] = f_p_j[0]
@@ -185,3 +214,87 @@ def getCellID(coord, mesh):
     points_on_proc = np.array(points_on_proc)
     cells = np.array(cells)
     return cells
+
+
+# def sortIndex(val, old_ind, new_ind):
+#     temp_ind = np.argsort(new_ind)
+#     ind = temp_ind[old_ind]
+#     print("new_ind:",new_ind)
+#     print("temp_ind:",temp_ind)
+#     print("old ind:", old_ind)
+#     print("ind:", ind)
+#     row = len(new_ind)
+#     col = 1
+#     ret_val = np.zeros(row)
+#     for ii in range(len(ind)):
+#         ret_val[ind[ii]] = val[ii]
+#     return ret_val, ind
+
+def sortIndex(old_ind, new_ind):
+    temp_ind = np.argsort(new_ind)
+    ind = temp_ind[old_ind]
+    row = len(new_ind)
+    return ind
+
+def applyNodalForces(f_array, mesh, W):
+    """
+    Applies input vertex forces to relevant DOF locations in force vector
+    """
+
+    # get vtx_to_dof map
+    vtx_to_dof = getVertexToDofMap(W, mesh)
+
+    # collapse map to vector
+    vtx_to_dof = np.reshape(vtx_to_dof, (-1,1))
+
+    # apply forces to vertex DOFs
+    f_col = np.reshape(f_array, (-1,1))
+    f1 = Function(W)
+    f1_0,_ = f1.split()
+    f_full = f1_0.vector.getArray()
+    f_full[vtx_to_dof.astype('int')] = f_col
+    f1_0.vector.setArray(f_full)
+
+    return f1
+
+def getVertexToDofMap(W, mesh):
+    """
+    Returns the "vertex to DOF map" with shape [nVtx,dim] containing
+    the index of the DOF corresponding to each vertex/direction--used
+    to directly map applied forces to force vector. This is not particularly
+    straightforward but is more efficient than previous impelementations; see
+    https://fenicsproject.discourse.group/t/application-of-point-forces-mapping-vertex-indices-to-corresponding-dofs/9646
+    for more information
+    """
+   
+    # extract the displacement subspace and associated dof_layout
+    W0, W0_to_W = W.sub(0).collapse()
+    dof_layout = W0.dofmap.dof_layout
+
+    # use vertex/cell/dof relationships to identify the "parent" DOF
+    # associated with each vertex
+    num_vertices = mesh.topology.index_map(
+        0).size_local + mesh.topology.index_map(0).num_ghosts
+    vertex_to_par_dof_map = np.zeros(num_vertices, dtype=np.int32)
+    num_cells = mesh.topology.index_map(
+        mesh.topology.dim).size_local + mesh.topology.index_map(
+        mesh.topology.dim).num_ghosts
+    c_to_v = mesh.topology.connectivity(mesh.topology.dim, 0)
+    for cell in range(num_cells):
+        vertices = c_to_v.links(cell)
+        dofs = W0.dofmap.cell_dofs(cell)
+        for i, vertex in enumerate(vertices):
+            vertex_to_par_dof_map[vertex] = dofs[dof_layout.entity_dofs(0, i)]
+
+    # using the "parent" DOF for each vertex and dofmap block size (bs),
+    # find the actual DOF index for each vertex/direction
+    geometry_indices = dolfinx.cpp.mesh.entities_to_geometry(
+        mesh, 0, np.arange(num_vertices, dtype=np.int32), False)
+    bs = W0.dofmap.bs
+    vtx_to_dof = np.zeros((num_vertices,bs), dtype=np.int32)
+    for vertex, geom_index in enumerate(geometry_indices):
+        par_dof = vertex_to_par_dof_map[vertex]
+        for b in range(bs):
+            vtx_to_dof[vertex, b] = W0_to_W[par_dof*bs+b]
+
+    return vtx_to_dof

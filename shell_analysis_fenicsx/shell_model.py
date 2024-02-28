@@ -19,7 +19,7 @@ from dolfinx.nls.petsc import NewtonSolver
 from ufl import (dx, inner, dot, cross, as_matrix, Identity, sym, split,
                 CellDiameter, TestFunction, derivative, tr)
 from shell_analysis_fenicsx.kinematics import *
-
+from shell_analysis_fenicsx.utils import project
 
 class MaterialModel(object):
 
@@ -61,16 +61,17 @@ class MaterialModel(object):
         C = (E/(1.0 - nu*nu))*as_matrix([[1.0,  nu,   0.0         ],
                                      [nu,   1.0,  0.0         ],
                                      [0.0,  0.0,  0.5*(1.0-nu)]])
+        k = 0.833 # shear correction factor from Nastran
         if self.BOT is True:
             A = h*C # Extensional stiffness matrix (3x3)
             B = -h**2/2*C # Coupling (extensional bending) stiffness matrix (3x3)
             D = h**3/3*C # Bending stiffness matrix (3x3)
-            A_s = G*h*Identity(2) # # Out-of-plane shear stiffness matrix (2x2)
+            A_s = k*G*h*Identity(2) # # Out-of-plane shear stiffness matrix (2x2)
         else:
             A = h*C # Extensional stiffness matrix (3x3)
             B = 0 # Coupling (extensional bending) stiffness matrix (3x3)
             D = h**3/12*C # Bending stiffness matrix (3x3)
-            A_s = G*h*Identity(2) # # Out-of-plane shear stiffness matrix (2x2)
+            A_s = k*G*h*Identity(2) # # Out-of-plane shear stiffness matrix (2x2)
         return (A,B,D,A_s)
 
 class MaterialModelComposite(object):
@@ -229,9 +230,10 @@ class ElasticModel(object):
 
         dw = TestFunction(self.W)
         self.du_mid,self.dtheta = split(dw)
-        retval = derivative(elasticEnergy,self.w,dw) - inner(f,self.du_mid)*dx
+        retval = derivative(elasticEnergy,self.w,dw)
         if penalty:
             retval += self.penaltyResidual(self.w, dw, g, dss, dSS)
+        retval -= inner(f,self.du_mid)*dx
         return retval
 
     def penaltyResidual(self,u,v,g,dss,dSS):
@@ -271,6 +273,7 @@ class ShellStressRM:
         nu : dolfin constant. Material's Poisson's ratio
         h_th : dolfin constant. Shell's thickness
         """
+        self.mesh = mesh
         self.u_mid, self.theta = split(w)
         # Normal vector to each element is the third basis vector of the
         # local orthonormal basis (indexed from zero for consistency with Python):
@@ -289,6 +292,7 @@ class ShellStressRM:
         self.E01 = E01 = as_matrix([[E0[i] for i in range(0,3)],
                          [E1[i] for i in range(0,3)]])
         self.G = E / 2 / (1 + nu)
+        
         self.D = (E/(1.0 - nu*nu))*as_matrix([[1.0,  nu,   0.0         ],
                                      [nu,   1.0,  0.0         ],
                                      [0.0,  0.0,  0.5*(1.0-nu)]])
@@ -348,11 +352,18 @@ class ShellStressRM:
         """
         sigma_hat, sigma_shear = self.cauchyStresses(xi2)
         # von Mises stress formula with plane stress
+        # vonMises = sqrt(sigma_hat[0]**2 - sigma_hat[0]*sigma_hat[1]
+        #                 + sigma_hat[1]**2 + 3*sigma_hat[2]**2
+        #                 + 3*sigma_shear[0]**2 + 3*sigma_shear[1]**2)
         vonMises = sqrt(sigma_hat[0]**2 - sigma_hat[0]*sigma_hat[1]
-                        + sigma_hat[1]**2 + 3*sigma_hat[2]**2
-                        + 3*sigma_shear[0]**2 + 3*sigma_shear[1]**2)
+                        + sigma_hat[1]**2 + 3*sigma_hat[2]**2)
         return vonMises
 
+    def projectedvonMisesStress(self, xi2):
+        V1 = FunctionSpace(self.mesh, ("CG", 1))
+        von_Mises_func = Function(V1)
+        project(self.vonMisesStress(xi2), von_Mises_func, lump_mass=False)
+        return von_Mises_func
 
 class DynamicElasticModel(object):
 

@@ -28,7 +28,7 @@ beam = [#### quad mesh ####
         "plate_2_10_quad_40_200.xdmf",
         "plate_2_10_quad_80_400.xdmf",]
 
-filename = "./clamped-RM-plate/"+beam[2]
+filename = "../../mesh/mesh-examples/clamped-RM-plate/"+beam[2]
 with dolfinx.io.XDMFFile(MPI.COMM_WORLD, filename, "r") as xdmf:
     mesh = xdmf.read_mesh(name="Grid")
 
